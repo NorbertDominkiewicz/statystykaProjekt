@@ -1,0 +1,198 @@
+---
+title: "Wykaz częstotliwości występowania depresji u studentów"
+author: "Norbert Dominkiewicz"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+## Biblioteki
+
+tidyverse, scales, psych
+
+```{r}
+library(tidyverse)
+library(scales)
+library(psych)
+```
+## Wczytanie i przegląd danych
+```{r}
+dane <- read_csv("student_depression_dataset.csv")
+head(dane)
+```
+
+## Wykresy
+
+```{r}
+wykres1 <- dane[601:750, ] |>
+  ggplot(aes(x = Age, y = after_stat(count) / sum(after_stat(count)))) +
+  geom_bar(color = "brown", fill = "antiquewhite") +
+  scale_y_continuous(labels = percent) +
+  labs(title = "Rozkład wieku u studentów", x = "Wiek", y = "Odsetek badanych") +
+  theme_bw() +
+  theme(axis.text.y = element_text(angle = 25, color = "darkgreen"),
+  plot.title = element_text(hjust = 0.5, color = "darkred"))
+
+wykres1
+
+wykres2 <- dane[401:550, ] |>
+  ggplot(aes(x = `Study Satisfaction`, fill = Gender)) +
+  geom_histogram(bins = 10, color = "black", position = "dodge") +
+  labs(title = "Rozkład satysfakcji studentów u danej płci", x = "Poziom Satysfakcji", y = "Liczebność") +
+  theme_bw() +
+  theme(axis.text.y = element_text(angle = 25, color = "darkgreen"),
+        plot.title = element_text(hjust = 0.5, color = "darkred"))
+
+wykres2
+
+wykres3 <- dane[801:950, ] |>
+  group_by(`Sleep Duration`) |>
+  summarise(count = n(), .groups = "drop") |>
+  arrange(desc(count)) |>
+  mutate(fraction = count / sum(count), ymax = cumsum(fraction), ymin = c(0, head(ymax, n = -1))) |>
+  ggplot(aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 3, fill = `Sleep Duration`)) +
+  geom_rect(color = "white") +
+  coord_polar(theta = "y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(title = "Czas snu studentów dla 150 rekordów",
+       fill = "Sleep Duration") +
+  scale_fill_brewer(palette = "Set2") +
+  theme(plot.title = element_text(hjust = 0.5, color = "darkred", size = 14))
+
+wykres3
+
+
+```
+
+
+### Policzone parametry liczbowe i pozycyjne
+
+# Liczbowe
+
+<!-- średnia, odchylenie, mediana, kurtoza, min, max, wariancja -->
+
+1. Wiek
+```{r}
+wiek <- dane %>%
+  select(Age) %>%
+  describe()
+
+wariancja1 <- wiek$sd
+wariancja1^2
+
+```
+
+2. Średnia ocen
+```{r}
+sredniaOcen <- dane %>%
+  select(CGPA) %>%
+  describe()
+
+wariancja2 <- sredniaOcen$sd
+wariancja2^2
+```
+
+3. Presja
+```{r}
+presja <- dane %>%
+  select(`Academic Pressure`) %>%
+  describe()
+
+wariancja3 <- presja$sd
+wariancja3^2
+```
+
+4. Czas pracy/nauki
+```{r}
+czasPracy <- dane %>%
+  select(`Work/Study Hours`) %>%
+  describe()
+
+wariancja4 <- czasPracy$sd
+wariancja4^2
+```
+
+5. Satysfakcja ze studiów w skali 1 - 5
+```{r}
+satysfakcja <- dane %>%
+  select(`Study Satisfaction`) %>%
+  describe()
+
+wariancja5 <- satysfakcja$sd
+wariancja5^2
+```
+
+6. Stres finansowy w skali 1 - 5
+```{r}
+stresFinansowy <- dane %>%
+  select(`Financial Stress`) %>%
+  describe()
+
+wariancja6 <- stresFinansowy$sd
+wariancja6^2
+```
+
+# Parametry pozycyjne
+
+<!-- mediana, q1, q3, mininum, maksimum -->
+
+### Przedziały ufności
+
+# Liczbowe
+
+Przedziały ufności:
+
+Dla średniej: Można użyć funkcji t.test() (Lab04, sekcja 3.3) lub ZTest() z biblioteki DescTools (Lab05).
+
+Dla mediany: Test Wilcoxona (wilcox.test(), Lab06).
+
+Dla wariancji: varTest() z biblioteki EnvStats (Lab05).
+
+Dla frakcji: prop.test() lub binom.test() (Lab05).
+
+Testowanie hipotez:
+
+Średnie: t.test() (Lab05).
+
+Mediany: wilcox.test() (Lab06).
+
+Wariancje: var.test() (Lab05).
+
+Frakcje: prop.test() (Lab05).
+
+3. Analiza regresji
+Regresja liniowa: Użycie funkcji lm() (przykłady w Lab06, sekcja 3.3). Testowanie istotności współczynników za pomocą summary(lm_model).
+
+Testy związane z regresją: Sprawdzenie założeń (normalność reszt, homoskedastyczność) za pomocą testów Shapiro-Wilka (shapiro.test()) i Breuscha-Pagana (lmtest::bptest()).
+
+a) Parametry liczbowe i pozycyjne
+🔹 Lab01 (Podstawy R):
+
+Typy danych (str. 3-6) - np. konwersja zmiennych na czynniki (factor())
+
+Obliczenia podstawowe (str. 10-11) - mean(), sd(), quantile()
+
+//////////////////////
+
+Wymaganie projektu	Źródło w laboratoriach	Gotowy kod?
+a) Parametry	Lab01 (3-6), Lab03 (3-9)	✅ Tak
+b) Przedziały	-	❌ Nie
+c) Testy	Lab03 (7)	❌ Częściowo
+d) Wykresy	Lab02 (6-35)	✅ Tak
+e) Regresja	-	❌ Nie
+f) Interpretacja	Lab02 (12-20)	✅ Tak
+💡 Propozycja działania:
+
+Zacznij od części (a) i (d) - masz tam gotowe rozwiązania
+
+Do przedziałów ufności (b) użyj powyższej funkcji przedzial_ufnosci_sredniej()
+
+W testach hipotez (c) skup się na:
+
+r
+shapiro.test() # normalność
+t.test()       # średnie
+wilcox.test()  # mediany
+
+
+
